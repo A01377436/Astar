@@ -133,8 +133,9 @@ def main():
     for line in maze:
         print(line)
 
+    res=600
     pygame.init()
-    screen = pygame.display.set_mode([500, 500])
+    screen = pygame.display.set_mode([res, res])
 
     running = True
     while running:
@@ -148,7 +149,7 @@ def main():
 
         x = 0
         y = 0
-        w = 500 / len(maze)
+        w = res / len(maze)
         color = (0, 0, 0)
         for row in maze:
             for col in row:
