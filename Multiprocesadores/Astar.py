@@ -15,7 +15,7 @@ class Node():
     def __eq__(self, other):
         return self.position == other.position
 
-def astar(maze,node,end,path):
+def astar(maze,node,end,path,prev):
 
     # Create start and end node
     current_node = node
@@ -36,7 +36,8 @@ def astar(maze,node,end,path):
 
     for object in adjacent_nodes:
         if( (object.position[0]>=0 and object.position[1]>=0) and (object.position[0]<len(maze) and object.position[1]<len(maze[0])) and (maze[object.position[0]][object.position[1]] != 1)):
-            temp.append(object)
+            if(object.position != prev):
+                temp.append(object)
 
     adjacent_nodes=temp
 
@@ -48,26 +49,23 @@ def astar(maze,node,end,path):
     adjacent_nodes.sort(key=operator.attrgetter('f'))
 
     for object in adjacent_nodes:
-        result,path=astar(maze,object,end,path)
+        result,path=astar(maze,object,end,path,current_node.position)
         if (result == True):
-            print(object.position)
+            #print(object.position)
             path.append(object.position)
             return True,path
-        else:
-            break
+    return False,path
 
 def main():
     maze = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 1, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 1, 1, 1, 1, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
     start_node=Node(None,(0,0))
@@ -75,8 +73,10 @@ def main():
 
     path=[]
 
-    _,path=astar(maze,start_node,end_node,path)
+    _,path=astar(maze,start_node,end_node,path,(-1,-1))
     path.append(start_node.position)
+
+    path=path[::-1]
 
     for line in maze:
         print(line)
@@ -87,6 +87,7 @@ def main():
     print("-------------")
     for line in maze:
         print(line)
+    print(path)
 
 if __name__ == '__main__':
     main()
