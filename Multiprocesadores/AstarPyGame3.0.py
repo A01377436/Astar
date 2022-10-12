@@ -1,6 +1,7 @@
 import copy
 import operator
 import pygame
+import math
 
 class Node():
     """A node class for A* Pathfinding"""
@@ -38,7 +39,7 @@ def astar(maze,start,end):
             if event.type == pygame.QUIT:
                 running = False
 
-        for i in range(0,1000000):
+        for i in range(0,10000000):
             a=0
 
         for node in closed:
@@ -78,12 +79,11 @@ def astar(maze,start,end):
 
 
 ##########################################################################3
-        opened.sort(key=operator.attrgetter('g'))
-
+        opened.sort(key=operator.attrgetter('f'))
         currentNode=opened[0]
         currentIndex=0
 
-        #print(currentNode.position)
+        print(currentNode.f)
 
 
         opened.pop(currentIndex)
@@ -128,8 +128,8 @@ def astar(maze,start,end):
                 if child.position == closed_child.position:
                     clsed=True
 
-            child.g = currentNode.g + 1
-            child.h = ((child.position[0] - end.position[0]) ** 2) + ((child.position[1] - end.position[1]) ** 2)
+            child.g = currentNode.g+1
+            child.h = math.sqrt(((child.position[0] - end.position[0]) ** 2) + ((child.position[1] - end.position[1]) ** 2))
             child.f = child.g + child.h
 
             for opened_node in opened:
@@ -172,29 +172,16 @@ def astar(maze,start,end):
 
 
 def main():
-    maze = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0],
-            [0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
-            [0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0],
-            [0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0],
-            [0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0],
-            [0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0],
-            [0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0],
-            [0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
-            [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0],
-            [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0],
-            [0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
-            [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]
+    maze = [[0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]]
 
-    start_node=Node(None,(3,5))
-    end_node=Node(None,(16,18))
+    start_node=Node(None,(5,3))
+    end_node=Node(None,(2,3))
 
     path,closed,opened=astar(maze,start_node,end_node)
 
@@ -210,7 +197,7 @@ def main():
     for node in closed:
         maze[node.position[0]][node.position[1]]=5
     for node in opened:
-        maze[node.position[0]][node.position[1]]=5
+        maze[node.position[0]][node.position[1]]=6
     for coord in path:
         maze[coord[0]][coord[1]]=2
     maze[end_node.position[0]][end_node.position[1]]=3
@@ -251,6 +238,8 @@ def main():
                     color = (255, 255, 0)
                 elif (col == 5):
                     color = (180,180,180)
+                elif (col == 6):
+                    color = (0,255,255)
                 box = pygame.Rect(x, y, w, w)
                 pygame.draw.rect(screen, (0, 0, 0), box, 2)
                 pygame.draw.rect(screen, color, box)
