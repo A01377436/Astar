@@ -18,6 +18,31 @@ class Node():
     def __eq__(self, other):
         return self.position == other.position
 
+def partition(array,low,high):
+    pivot = array[high]
+
+    i = low - 1
+
+    for j in range(low, high):
+        if array[j].f <= pivot.f:
+            i = i + 1
+
+            (array[i], array[j]) = (array[j], array[i])
+
+    (array[i + 1], array[high]) = (array[high], array[i + 1])
+
+    return i + 1
+
+
+def quickSort(array,low,high):
+    if low < high:
+
+        pi = partition(array, low, high)
+
+        quickSort(array, low, pi - 1)
+
+        quickSort(array, pi + 1, high)
+
 def astar(maze,start,end):
 
     mazedraw = copy.deepcopy(maze)
@@ -32,15 +57,13 @@ def astar(maze,start,end):
     screen = pygame.display.set_mode([res, res])
     screen.fill((255, 255, 255))
 
-    a=0
-
     while (len(opened)>0):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
         for i in range(0,1000000):
-            a=0
+            continue
 
         for node in closed:
             mazedraw[node.position[0]][node.position[1]] = 5
@@ -79,11 +102,12 @@ def astar(maze,start,end):
 
 
 ##########################################################################3
-        opened.sort(key=operator.attrgetter('f'))
+        quickSort(opened,0,len(opened)-1)
+
         currentNode=opened[0]
         currentIndex=0
 
-        print(currentNode.f)
+        #print(currentNode.f)
 
 
         opened.pop(currentIndex)
@@ -103,16 +127,16 @@ def astar(maze,start,end):
             node_position=((currentNode.position[0]+new_position[0]),(currentNode.position[1]+new_position[1]))
 
             if not(node_position[0] < len(maze)):
-                print("Out of range")
+                #print("Out of range")
                 continue
             if (node_position[0] < 0):
-                print("Negative Value")
+                #print("Negative Value")
                 continue
             if not(node_position[1]<len(maze[0])):
-                print("Out of range")
+                #print("Out of range")
                 continue
             if (node_position[1] < 0):
-                print("Negative Value")
+                #print("Negative Value")
                 continue
             if (maze[node_position[0]][node_position[1]] != 0):
                 continue
@@ -228,15 +252,15 @@ def main():
 
     path,closed,opened=astar(maze,start_node,end_node)
 
-    print(path)
+    #print(path)
 
     #print("-----------")
     #for closedNode in closed:
     #    print("x:"+str(closedNode.position[1])+" y:"+str(closedNode.position[0])+" g:"+str(closedNode.g)+" h:"+str(closedNode.h)+" f:"+str(closedNode.f))
     #print("-----------")
 
-    for line in maze:
-        print(line)
+    #for line in maze:
+        #print(line)
     for node in closed:
         maze[node.position[0]][node.position[1]]=5
     for node in opened:
@@ -245,11 +269,11 @@ def main():
         maze[coord[0]][coord[1]]=2
     maze[end_node.position[0]][end_node.position[1]]=3
     maze[start_node.position[0]][start_node.position[1]]=4
-    print("-------------")
-    for line in maze:
-        print(line)
+    #print("-------------")
+    #for line in maze:
+        #print(line)
 
-    print(len(path))
+    #print(len(path))
     res=600
     pygame.init()
     screen = pygame.display.set_mode([res, res])
