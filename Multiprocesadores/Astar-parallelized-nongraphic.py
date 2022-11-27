@@ -13,8 +13,9 @@ import time #Used for delay only for graphical purposes
 import math #Used for square root
 from storeMaze import returnMaze #Support file with different mazes and coordinates
 from multiprocessing import shared_memory, Process, Lock, Pool
+import functools
 
-currentNode, opened, closed, end = any
+# currentNode, opened, closed, end = any
 
 class Node():
     
@@ -62,10 +63,48 @@ def quickSort(array,low,high):
         quickSort(array, pi + 1, high)
 
 
+def analyzeChild(child,currentNode, opened, closed, end):
+    #We iterate through the child nodes and check two main things:
+    #If child position is equal to a closed node, we skip it as it has already been through
+    #If child position is equal to an oppened node, we check how efficiently we arrived there
+    #   If we findout we arrived with a better path, we replace opened node with child
+    #If both of the conditionals return False, we append the child to the oppened nodes
+    # global currentNode, opened, closed, end
+    notInOpened,notInClosed=True,True
+
+    for closed_child in closed:
+        if child.position == closed_child.position:
+            notInClosed=False
+
+    #Creating child node
+    child.g = currentNode.g+1
+    child.h = math.sqrt(((child.position[0] - end.position[0]) ** 2) + ((child.position[1] - end.position[1]) ** 2))
+    child.f = child.g + child.h
+
+    #Checking if opened
+    for opened_node in opened:
+        if child==opened_node:
+            notInOpened=False
+
+    if (notInOpened and notInClosed):
+        opened.append(child)
+        return
+
+    #If children is equal to an existing one but with lower G, we replace it
+    if notInClosed == True:
+        for i in range(0,len(opened)):
+            if child==opened[i]:
+                if child.g < opened[i].g:
+                    opened[i]=child
+                    continue
+                elif child.f < opened[i].f:
+                    opened[i]=child
+                    continue
+
 def astar(maze,start,end,screen,delay):
     #Main A* Algorithm
 
-    global currentNode, opened, closed
+    # global currentNode, opened, closed
     opened=[]
     closed=[]
     #Open first node
@@ -135,54 +174,21 @@ def astar(maze,start,end,screen,delay):
             children.append(new_node)
 
 
+        kwargs = {'currentNode':currentNode,'opened':opened,'closed':closed,'end':end}
+        analyzeChildSingleArg = functools.partial(analyzeChild,**kwargs)
         #Parallel
-        for child in children:
-            analyzeChild(child)
-        # with Pool() as p:
-        #     p.map(analyzeChild(children,currentNode,opened,closed,end))
+        # for child in children:
+        #     analyzeChildSingleArg(child)
+        # kwargs = {'currentNode':currentNode,'opened':opened,'closed':closed,'end':end}
+        with Pool() as p:
+            p.map(analyzeChildSingleArg,children)
             
 
     path=[]
     return path,closed,opened,False
 
 
-def analyzeChild(child):
-    #We iterate through the child nodes and check two main things:
-    #If child position is equal to a closed node, we skip it as it has already been through
-    #If child position is equal to an oppened node, we check how efficiently we arrived there
-    #   If we findout we arrived with a better path, we replace opened node with child
-    #If both of the conditionals return False, we append the child to the oppened nodes
-    global currentNode, opened, closed, end
-    notInOpened,notInClosed=True,True
 
-    for closed_child in closed:
-        if child.position == closed_child.position:
-            notInClosed=False
-
-    #Creating child node
-    child.g = currentNode.g+1
-    child.h = math.sqrt(((child.position[0] - end.position[0]) ** 2) + ((child.position[1] - end.position[1]) ** 2))
-    child.f = child.g + child.h
-
-    #Checking if opened
-    for opened_node in opened:
-        if child==opened_node:
-            notInOpened=False
-
-    if (notInOpened and notInClosed):
-        opened.append(child)
-        return
-
-    #If children is equal to an existing one but with lower G, we replace it
-    if notInClosed == True:
-        for i in range(0,len(opened)):
-            if child==opened[i]:
-                if child.g < opened[i].g:
-                    opened[i]=child
-                    continue
-                elif child.f < opened[i].f:
-                    opened[i]=child
-                    continue
 
 def main():
     mazeName=int(input("Maze: "))
