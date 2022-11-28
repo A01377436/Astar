@@ -173,14 +173,17 @@ def astar(maze,start,end,screen,delay):
 
 def main():
     mazeName=int(input("Maze: "))
-    print("ok")
     maze,coords = returnMaze(mazeName)
 
     start_node=Node(None,coords[0])
     end_node=Node(None,coords[1])
 
+    start = time.time()
     path,closed,opened,error=astar(maze,start_node,end_node,None,0)
-
+    end = time.time()
+    
+    print("Tiempo de ejecucion serial:", end - start)
+    
     if error:
         print("Error: Program Closed")
         return
@@ -209,7 +212,6 @@ def main():
     #print(line)
     #print(len(path))
 
-    print("end")
 
 
 if __name__ == '__main__':
