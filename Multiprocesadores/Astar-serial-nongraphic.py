@@ -182,7 +182,7 @@ def main():
     path,closed,opened,error=astar(maze,start_node,end_node,None,0)
     end = time.time()
     
-    print("Tiempo de ejecucion serial:", end - start)
+    print("Tiempo de ejecucion - codigo serial:", end - start)
     
     if error:
         print("Error: Program Closed")
@@ -190,7 +190,7 @@ def main():
 
     """Debugging Prints"""
 
-    print(path)
+    print("Shortest path:", path)
 
     #print("-----------")
     #for closedNode in closed:

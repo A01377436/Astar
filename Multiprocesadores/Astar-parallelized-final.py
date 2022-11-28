@@ -1,4 +1,4 @@
-# A* Algorithm Code in Python
+# A* Algorithm Code Parallelized in Python
 # Tested, Optimized and Commented
 # A* implementation details:
 #       Our implementation will evaluate adjacent nodes always in this order: North, South, West, East
@@ -193,7 +193,7 @@ def main():
     path,closed,opened,error=astar(maze,start_node,end_node,None,0)
     end = time.time()
     
-    print("Tiempo de ejecución paralelizado:", end - start)
+    print("Tiempo de ejecución - codigo paralelizado:", end - start)
     
     if error:
         print("Error: Program Closed")
@@ -201,15 +201,8 @@ def main():
 
     """Debugging Prints"""
 
-    print(path)
+    print("Shortest path:", path)
 
-    #print("-----------")
-    #for closedNode in closed:
-    #    print("x:"+str(closedNode.position[1])+" y:"+str(closedNode.position[0])+" g:"+str(closedNode.g)+" h:"+str(closedNode.h)+" f:"+str(closedNode.f))
-    #print("-----------")
-
-    #for line in maze:
-        #print(line)
     for node in closed:
         maze[node.position[0]][node.position[1]]=5
     for node in opened:
@@ -218,13 +211,6 @@ def main():
         maze[coord[0]][coord[1]]=2
     maze[end_node.position[0]][end_node.position[1]]=3
     maze[start_node.position[0]][start_node.position[1]]=4
-    #print("-------------")
-    #for line in maze:
-    #print(line)
-    #print(len(path))
-
-
-
 
 if __name__ == '__main__':
     main()
