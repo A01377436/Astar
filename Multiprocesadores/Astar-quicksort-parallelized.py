@@ -1,4 +1,4 @@
-# A* Algorithm Code in Python
+# A* Algorithm Code Parallelized in Python
 # Tested, Optimized and Commented
 # A* implementation details:
 #       Our implementation will evaluate adjacent nodes always in this order: North, South, West, East
@@ -10,9 +10,13 @@
 
 import copy #Used for a deepcopy of variables
 import time #Used for delay only for graphical purposes
-import pygame #Used to desplay solution graphically
 import math #Used for square root
 from storeMaze import returnMaze #Support file with different mazes and coordinates
+import functools
+from multiprocessing import shared_memory, Process, Lock, Pool
+import threading
+from threading import Thread
+
 
 class Node():
     """A node class for A* Pathfinding"""
@@ -29,78 +33,109 @@ class Node():
     def __eq__(self, other):
         return self.position == other.position
 
-def initDrawOnScreen(res):
-    """Initializes pygame and returns the screen in which everything will be drawn"""
-    pygame.init()
-    screen = pygame.display.set_mode([res, res])
-    screen.fill((255, 255, 255))
-    return screen
+    def __ne__(self, other):
+        return not (self.position == other.position)
 
-def drawOnScreen(mazedraw,screen):
-    #Defined colours for drawing Maze and solution
-    colours = {
-        0:(255,255,255),
-        1:(0,0,0),
-        2: (10, 255, 10),
-        3: (255, 10, 10),
-        4: (255, 255, 0),
-        5: (180, 180, 180),
-        6: (0, 255, 255),
-    }
-    #Checks if window is closed, if yes it returns an error and everything is aborted
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            return True
-    x = 0
-    y = 0
-    w = screen.get_height() / len(mazedraw)
-    color = (0, 0, 0)
-    for row in mazedraw:
-        for col in row:
-            color=colours[col]
-            box = pygame.Rect(x, y, w, w)
-            pygame.draw.rect(screen, (0, 0, 0), box, 1)
-            pygame.draw.rect(screen, color, box)
-            x = x + w
-        y = y + w
-        x = 0
+    def __lt__(self, other):
+        return (self.position < other.position)
 
-    pygame.display.flip()
-    return False
+    def __gt__(self, other):
+        return (self.position > other.position)
+
+    def __le__(self, other):
+        return (self.position < other.position) or (self.position == other.position)
+
+    def __ge__(self, other):
+        return (self.position > other.position) or (self.position == other.position)
 
 
-def partition(array,low,high):
-    #Used in the quick sort recursive algorithm
-    pivot = array[high] #Pivot is chosen as the right most value
+# def partition(array,low,high):
+#     #Used in the quick sort recursive algorithm
+#     pivot = array[high] #Pivot is chosen as the right most value
 
-    i = low - 1
+#     i = low - 1
 
-    for j in range(low, high): #Iterates through array
-        if array[j].f <= pivot.f: #If an element with a smaller value of f is found it will move it to the beginning of the array
-            i = i + 1
+#     #Parallel
+#     for j in range(low, high): #Iterates through array
+#         if array[j].f <= pivot.f: #If an element with a smaller value of f is found it will move it to the beginning of the array
+#             i = i + 1
+#             (array[i], array[j]) = (array[j], array[i])
 
-            (array[i], array[j]) = (array[j], array[i])
+#     (array[i + 1], array[high]) = (array[high], array[i + 1])
 
-    (array[i + 1], array[high]) = (array[high], array[i + 1])
-
-    return i + 1
+#     return i + 1
 
 
-def quickSort(array,low,high):
-    #Recursive quicksort algorithm with pivot in the right most value
-    if low < high:#Repeats until both indicators intersect or cross to the other side
+# def quickSort(array,low,high):
+#     #Recursive quicksort algorithm with pivot in the right most value
+#     if low < high:#Repeats until both indicators intersect or cross to the other side
 
-        pi = partition(array, low, high)
+#         pi = partition(array, low, high)
 
-        quickSort(array, low, pi - 1)
+#         quickSort(array, low, pi - 1)
+#         quickSort(array, pi + 1, high)
 
-        quickSort(array, pi + 1, high)
+
+def qsort(sets,left,right):
+
+    print("thread {0} is sorting {1}".format(threading.current_thread(), sets[left:right]))
+
+    i = left
+    j = right
+    pivot = sets[round((left + right)/2)]
+    temp = 0
+    while(i <= j):
+         while(pivot > sets[i]):
+             i = i+1
+         while(pivot < sets[j]):
+             j = j-1
+         if(i <= j):
+             temp = sets[i]     
+             sets[i] = sets[j]
+             sets[j] = temp
+             i = i + 1
+             j = j - 1
+
+    lthread = None
+    rthread = None
+
+    if (left < j):
+        lthread = Thread(target = lambda: qsort(sets,left,j))
+        lthread.start()
+
+    if (i < right):
+        rthread = Thread(target=lambda: qsort(sets,i,right))
+        rthread.start()
+
+    if lthread is not None: lthread.join()
+    if rthread is not None: rthread.join()
+    return sets
+
+
+def validateNeighbor(new_position,currentNode,maze):
+    #Declaring a new node with the postion given by the current node and the for loop above
+    node_position=((currentNode.position[0]+new_position[0]),(currentNode.position[1]+new_position[1]))
+    #Conditionals to ensure new node is inside maze and its a non-wall cell
+    if not(node_position[0] < len(maze)):
+        #print("Out of range")
+        return
+    if not(node_position[1]<len(maze[0])):
+        #print("Out of range")
+        return
+    if (node_position[0] < 0):
+        #print("Negative Value")
+        return
+    if (node_position[1] < 0):
+        #print("Negative Value")
+        return
+    if (maze[node_position[0]][node_position[1]] != 0):
+        return
+    #After validated, a new node is created and appended to childrens list, this are the children of the parent current node
+    return Node(currentNode,node_position)
 
 
 def astar(maze,start,end,screen,delay):
     #Main A* Algorithm
-
-    mazedraw = copy.deepcopy(maze)
 
     opened=[]
     closed=[]
@@ -109,22 +144,15 @@ def astar(maze,start,end,screen,delay):
 
     while (len(opened)>0):#Iterate while there are open nodes or the end node is found
 
-        time.sleep(delay)#Just for graphical purposes
-
-        for node in closed:#Just for graphical purposes
-            mazedraw[node.position[0]][node.position[1]] = 5
-        for node in opened:
-            mazedraw[node.position[0]][node.position[1]] = 6
-
-        if drawOnScreen(mazedraw,screen):#Just for graphical purposes
-            return [], [], [], True
-
-        quickSort(opened,0,len(opened)-1) #Using non library based sorting algorithm
+        qsort(opened,0,len(opened)-1) #Using non library based sorting algorithm
 
         #Until line 134, used as a tiebraker, choosing the smalles H value if there are ties in F values
         selectedNode=0
         hValue=opened[0].h
         fValue=opened[0].f
+        
+        
+        #Parallel
         for i in range(1,len(opened)):
             if opened[i].f == fValue:
                 if opened[i].h < hValue:
@@ -159,23 +187,22 @@ def astar(maze,start,end,screen,delay):
             #Declearing a new node with the postion given by the current node and the for loop above
             node_position=((currentNode.position[0]+new_position[0]),(currentNode.position[1]+new_position[1]))
             #Conditionals to ensure new node is inside maze and its a non-wall cell
-            if not(node_position[0] < len(maze)):
+            if not(node_position[0] < len(maze)) or not(node_position[1]<len(maze[0])) or (node_position[0] < 0) or (node_position[1] < 0) or (maze[node_position[0]][node_position[1]] != 0):
                 #print("Out of range")
-                continue
-            if not(node_position[1]<len(maze[0])):
-                #print("Out of range")
-                continue
-            if (node_position[0] < 0):
-                #print("Negative Value")
-                continue
-            if (node_position[1] < 0):
-                #print("Negative Value")
-                continue
-            if (maze[node_position[0]][node_position[1]] != 0):
                 continue
             #After validated, a new node is created and appended to childrens list, this are the children of the parent current node
             new_node = Node(currentNode,node_position)
             children.append(new_node)
+        
+        #REMOVING OLD PARALLELIZATION
+        # kwargs = {'currentNode':currentNode,'maze':maze}
+        # positions = [(-1,0),(1,0),(0,-1),(0,1)]
+        # #We now take a look at neighbouring nodes, in the order defined at the top of this file
+        # validateNeighborSingleArg = functools.partial(validateNeighbor,**kwargs)
+        # with Pool() as p:
+        #     test = p.map(validateNeighborSingleArg,positions)
+        # children = list(filter(lambda item: item is not None, test))
+        #     # children.append(new_node)
 
 
         for child in children:
@@ -222,31 +249,25 @@ def astar(maze,start,end,screen,delay):
 
 def main():
     mazeName=int(input("Maze: "))
-    delay=float(input("Delay: "))
     maze,coords = returnMaze(mazeName)
 
     start_node=Node(None,coords[0])
     end_node=Node(None,coords[1])
 
-    screen=initDrawOnScreen(600)
-
-    path,closed,opened,error=astar(maze,start_node,end_node,screen,delay)
-
+    start = time.time()
+    path,closed,opened,error=astar(maze,start_node,end_node,None,0)
+    end = time.time()
+    
+    print("Tiempo de ejecución - codigo paralelizado:", end - start)
+    
     if error:
         print("Error: Program Closed")
         return
 
     """Debugging Prints"""
 
-    #print(path)
+    print("Shortest path:", path)
 
-    #print("-----------")
-    #for closedNode in closed:
-    #    print("x:"+str(closedNode.position[1])+" y:"+str(closedNode.position[0])+" g:"+str(closedNode.g)+" h:"+str(closedNode.h)+" f:"+str(closedNode.f))
-    #print("-----------")
-
-    #for line in maze:
-        #print(line)
     for node in closed:
         maze[node.position[0]][node.position[1]]=5
     for node in opened:
@@ -255,23 +276,6 @@ def main():
         maze[coord[0]][coord[1]]=2
     maze[end_node.position[0]][end_node.position[1]]=3
     maze[start_node.position[0]][start_node.position[1]]=4
-    #print("-------------")
-    #for line in maze:
-    #print(line)
-    #print(len(path))
-
-    running = True
-    while running:
-
-        # Did the user click the window close button?
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        drawOnScreen(maze,screen)
-
-    pygame.quit()
-
 
 if __name__ == '__main__':
     main()

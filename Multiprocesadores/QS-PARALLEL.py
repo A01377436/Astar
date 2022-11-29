@@ -4,7 +4,7 @@ import time
 
 def qsort(sets,left,right):
 
-    print("thead {0} is sorting {1}".format(threading.current_thread(), sets[left:right]))
+    print("thread {0} is sorting {1}".format(threading.current_thread(), sets[left:right]))
 
     i = left
     j = right
@@ -40,5 +40,8 @@ def qsort(sets,left,right):
 
 '''testing below'''
 ls = [1,3,6,9,1,2,3,8,6]
+start = time.time()
 res = qsort(ls, 0, len(ls) - 1)
+end = time.time()
+print(end-start)
 print(res)
